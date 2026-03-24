@@ -3,7 +3,6 @@ package com.school.system.services;
 import com.school.system.models.Student;
 import com.school.system.models.Subject;
 import com.school.system.models.Teacher;
-import com.school.system.repositories.SchoolRepository;
 import com.school.system.repositories.StudentRepository;
 import com.school.system.repositories.SubjectRepository;
 import com.school.system.repositories.TeacherRepository;
