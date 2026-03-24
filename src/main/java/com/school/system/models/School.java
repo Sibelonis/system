@@ -19,14 +19,14 @@ public class School {
     @GeneratedValue
     private Integer schoolId;
     private String schoolName;
-    private String schoolAddress;
+    private String schoolAddress; //prerobit ako objekt
     private String degree;
     private int studentCount;
     @OneToMany(mappedBy = "school")
-    @JsonManagedReference("students")
+    @JsonManagedReference("school-students")
     private List<Student> students;
     @OneToMany(mappedBy = "school")
-    @JsonManagedReference("teachers")
+    @JsonManagedReference("school-teachers")
     private List<Teacher> teachers;
 
 

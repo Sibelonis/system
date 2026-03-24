@@ -3,6 +3,7 @@ package com.school.system.controllers;
 import com.school.system.models.Student;
 import com.school.system.services.StudentService;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,10 +25,16 @@ public class StudentController {
     public List<Student> findAllStudents() {
         return studentService.findAll();
     }
+
     @DeleteMapping("/students/{student-id}")
     @ResponseStatus(HttpStatus.OK)
     public void deleteStudent(@PathVariable("student-id") Integer studentId) {
         studentService.deleteById(studentId);
 
+    }
+    @PostMapping("/student-{student-id}/subject-{subject-name}")
+    public ResponseEntity<Student> addSubjectToStudent(@PathVariable("student-id") Integer studentId, @PathVariable("subject-name") String subjectName) {
+        Student create = studentService.addSubjectToStudent(studentId,subjectName);
+        return ResponseEntity.status(HttpStatus.CREATED).body(create);
     }
 }

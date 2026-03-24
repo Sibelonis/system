@@ -1,11 +1,12 @@
 package com.school.system.models;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.*;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -24,14 +25,24 @@ public class Student {
 
     @ManyToOne
     @JoinColumn(name = "teacher_id")
-    @JsonBackReference
+    @JsonBackReference("student-teacher")
     private Teacher teacher;
 
     @ManyToOne
     @JoinColumn(name = "school_id")
-    @JsonBackReference("students")
+    @JsonBackReference("school-students")
     private School school;
 
     @ManyToMany(mappedBy = "students")
+    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
     private List<Subject> subjects;
+
+    public void addSubject(Subject subject) {
+        if (subjects == null) subjects = new ArrayList<>();
+        if (!subjects.contains(subject)) {
+            subjects.add(subject);
+            if (subject.getStudents() == null) subject.setStudentsList(new ArrayList<>());
+            if (!subject.getStudents().contains(this)) subject.getStudents().add(this);
+        }
+    }
 }
