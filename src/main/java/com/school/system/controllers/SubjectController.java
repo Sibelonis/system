@@ -1,6 +1,7 @@
 package com.school.system.controllers;
 
 import com.school.system.models.Subject;
+import com.school.system.modelsDTO.SubjectDTO;
 import com.school.system.services.SubjectService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -21,7 +22,7 @@ public class SubjectController {
     }
 
     @GetMapping("/subjects")
-    public List<Subject> findAllSubjects() {
+    public List<SubjectDTO> findAllSubjects() {
         return subjectService.findAll();
     }
 

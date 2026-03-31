@@ -1,8 +1,8 @@
 package com.school.system;
 
-import lombok.Getter;
+import jakarta.persistence.Embeddable;
 
-@Getter
+@Embeddable
 public enum Difficulty {
 
     EASY, MEDIUM, HARD

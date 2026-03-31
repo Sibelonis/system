@@ -1,6 +1,8 @@
 package com.school.system.models;
 
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import com.school.system.Difficulty;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -20,6 +22,7 @@ public class Subject {
     @GeneratedValue
     private Integer id;
     private String name;
+    @Embedded
     private Difficulty difficulty;
     private String description;
     @ManyToMany
@@ -36,7 +39,7 @@ public class Subject {
     private List<Student> students;
 
     @OneToOne(mappedBy = "subject")
-    @JsonManagedReference("teacher-subject")
+    @JsonManagedReference("teachers-subject")
     private Teacher teacher;
 
     public void setStudentsList(List<Student> students) { this.students = students; }

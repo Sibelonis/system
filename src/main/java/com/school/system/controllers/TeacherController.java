@@ -1,6 +1,7 @@
 package com.school.system.controllers;
 
 import com.school.system.models.Teacher;
+import com.school.system.modelsDTO.TeacherDTO;
 import com.school.system.services.TeacherService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +23,7 @@ public class TeacherController {
     }
 
     @GetMapping("/teachers")
-    public List<Teacher> findAllTeacher(){
+    public List<TeacherDTO> findAllTeacher(){
         return teacherService.findAll();
     }
 
@@ -33,14 +34,14 @@ public class TeacherController {
 
     }
     @PostMapping("/teacher-{teacher-id}/student-{student-id}")
-    public ResponseEntity<Teacher> addStudentToTeacher(@PathVariable("teacher-id") Integer teacherId, @PathVariable("student-id") Integer studentId) {
-        Teacher created = teacherService.addStudentToTeacher(teacherId, studentId);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    public ResponseEntity<TeacherDTO> addStudentToTeacher(@PathVariable("teacher-id") Integer teacherId, @PathVariable("student-id") Integer studentId) {
+        TeacherDTO updatedTeacher = teacherService.addStudentToTeacher(teacherId, studentId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(updatedTeacher);
     }
 
     @PostMapping("/teacher-{teacher-id}/subject-{subject-name}")
-    public ResponseEntity<Teacher> addSubjectToTeacher(@PathVariable("teacher-id")  Integer teacherId, @PathVariable("subject-name") String subjectName) {
-        Teacher created = teacherService.addSubjectToTeacher(teacherId, subjectName);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    public ResponseEntity<TeacherDTO> addSubjectToTeacher(@PathVariable("teacher-id")  Integer teacherId, @PathVariable("subject-name") String subjectName) {
+        TeacherDTO updatedTeacher = teacherService.addSubjectToTeacher(teacherId, subjectName);
+        return ResponseEntity.status(HttpStatus.CREATED).body(updatedTeacher);
     }
 }

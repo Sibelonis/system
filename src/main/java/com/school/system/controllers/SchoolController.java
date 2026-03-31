@@ -1,6 +1,6 @@
 package com.school.system.controllers;
 
-import com.school.system.models.School;
+import com.school.system.modelsDTO.SchoolDTO;
 import com.school.system.services.SchoolService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,13 +16,13 @@ public class SchoolController {
         this.schoolService = schoolService;
     }
 
-    @PostMapping("/schools")
-    public School saveSchool(@RequestBody School school) {
-        return schoolService.create(school);
+    @PostMapping("/school-save")
+    public SchoolDTO saveSchool(@RequestBody SchoolDTO schoolDTO) {
+        return schoolService.create(schoolDTO);
     }
 
     @GetMapping("/schools")
-    public List<School> getAllSchools() {
+    public List<SchoolDTO> getAllSchools() {
         return schoolService.findAll();
     }
 
@@ -33,14 +33,21 @@ public class SchoolController {
     }
 
     @PostMapping("/school-{school-id}/student-{student-id}")
-    public ResponseEntity<School> addStudentToSchool(@PathVariable("school-id") Integer schoolId, @PathVariable("student-id") Integer studentId) {
-        School created = schoolService.addStudentToSchool(schoolId, studentId );
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    public ResponseEntity<SchoolDTO> addStudentToSchool(
+            @PathVariable("school-id") Integer schoolId,
+            @PathVariable("student-id") Integer studentId) {
+
+        SchoolDTO updateSchool = schoolService.addStudentToSchool(schoolId, studentId );
+        return ResponseEntity.status(HttpStatus.CREATED).body(updateSchool);
+
     }
 
     @PostMapping("/school-{school-id}/teacher-{teacher-id}")
-    public ResponseEntity<School> addTeacherToSchool(@PathVariable("school-id") Integer schoolId, @PathVariable("teacher-id") Integer teacherId) {
-        School created = schoolService.addTeacherToSchool(schoolId, teacherId);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    public ResponseEntity<SchoolDTO> addTeacherToSchool(
+            @PathVariable("school-id") Integer schoolId,
+            @PathVariable("teacher-id") Integer teacherId) {
+
+        SchoolDTO updateSchool = schoolService.addTeacherToSchool(schoolId, teacherId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(updateSchool);
     }
 }

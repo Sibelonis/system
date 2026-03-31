@@ -7,12 +7,14 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.util.List;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString(exclude = {"school", "students", "subject"})
 @Entity
 public class Teacher {
 
@@ -26,7 +28,7 @@ public class Teacher {
     private String homeRoom;
 
     @OneToMany(mappedBy = "teacher")
-    @JsonManagedReference("student-teacher")
+    @JsonManagedReference("students-teachers")
     private List<Student> students;
 
     @ManyToOne
@@ -36,7 +38,7 @@ public class Teacher {
 
     @OneToOne
     @JoinColumn(name = "subject_id")
-    @JsonBackReference("teacher-subject")
+    @JsonBackReference("teachers-subject")
     private Subject subject;
 
     public void addStudent(Student student) {

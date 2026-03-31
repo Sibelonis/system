@@ -1,6 +1,6 @@
 package com.school.system.controllers;
 
-import com.school.system.models.Student;
+import com.school.system.modelsDTO.StudentDTO;
 import com.school.system.services.StudentService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,12 +17,12 @@ public class StudentController {
     }
 
     @PostMapping("/student")
-    public Student saveStudent(@RequestBody Student student) {
+    public StudentDTO saveStudent(@RequestBody StudentDTO student) {
         return studentService.create(student);
     }
 
     @GetMapping("/students")
-    public List<Student> findAllStudents() {
+    public List<StudentDTO> findAllStudents() {
         return studentService.findAll();
     }
 
@@ -33,8 +33,8 @@ public class StudentController {
 
     }
     @PostMapping("/student-{student-id}/subject-{subject-name}")
-    public ResponseEntity<Student> addSubjectToStudent(@PathVariable("student-id") Integer studentId, @PathVariable("subject-name") String subjectName) {
-        Student create = studentService.addSubjectToStudent(studentId,subjectName);
+    public ResponseEntity<StudentDTO> addSubjectToStudent(@PathVariable("student-id") Integer studentId, @PathVariable("subject-name") String subjectName) {
+        StudentDTO create = studentService.addSubjectToStudent(studentId,subjectName);
         return ResponseEntity.status(HttpStatus.CREATED).body(create);
     }
 }

@@ -1,10 +1,13 @@
 package com.school.system.models;
 
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,6 +15,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString(exclude = {"school", "teacher", "subjects"})
 @Entity
 public class Student {
 
@@ -25,7 +29,7 @@ public class Student {
 
     @ManyToOne
     @JoinColumn(name = "teacher_id")
-    @JsonBackReference("student-teacher")
+    @JsonBackReference("students-teachers")
     private Teacher teacher;
 
     @ManyToOne
@@ -45,4 +49,5 @@ public class Student {
             if (!subject.getStudents().contains(this)) subject.getStudents().add(this);
         }
     }
+
 }
