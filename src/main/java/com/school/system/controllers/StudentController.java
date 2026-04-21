@@ -16,17 +16,18 @@ public class StudentController {
         this.studentService = studentService;
     }
 
-    @PostMapping("/student")
-    public StudentDTO saveStudent(@RequestBody StudentDTO student) {
-        return studentService.create(student);
+    @PostMapping("/student-save")
+    public HttpStatus saveStudent(@RequestBody StudentDTO student) {
+        studentService.create(student);
+        return HttpStatus.OK;
     }
 
     @GetMapping("/students")
     public List<StudentDTO> findAllStudents() {
-        return studentService.findAll();
+               return studentService.findAll();
     }
 
-    @DeleteMapping("/students/{student-id}")
+    @DeleteMapping("/students/delete-{student-id}")
     @ResponseStatus(HttpStatus.OK)
     public void deleteStudent(@PathVariable("student-id") Integer studentId) {
         studentService.deleteById(studentId);

@@ -1,5 +1,6 @@
 package com.school.system.services;
 
+import com.school.system.errorHandling.BadRequestException;
 import com.school.system.maps.SchoolMapper;
 import com.school.system.models.School;
 import com.school.system.models.Student;
@@ -8,8 +9,9 @@ import com.school.system.modelsDTO.SchoolDTO;
 import com.school.system.repositories.SchoolRepository;
 import com.school.system.repositories.StudentRepository;
 import com.school.system.repositories.TeacherRepository;
-import jakarta.persistence.EntityNotFoundException;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -30,9 +32,11 @@ public class SchoolService {
     }
 
     public SchoolDTO addStudentToSchool(Integer schoolId, Integer studentId) {
-        School school = schoolRepository.findById(schoolId).orElseThrow(()-> new EntityNotFoundException("School not found"));
+        School school = schoolRepository.findById(schoolId)
+                .orElseThrow(()-> new BadRequestException("Invalid school: " + schoolId + "\n Please use real school ID."));
 
-        Student student = studentRepository.findById(studentId).orElseThrow(()-> new EntityNotFoundException("Student not found"));
+        Student student = studentRepository.findById(studentId)
+                .orElseThrow(()-> new BadRequestException("Invalid student: " + studentId + "\n Please use real student ID."));
 
         school.addStudent(student);
         School saved = schoolRepository.save(school);
@@ -41,18 +45,24 @@ public class SchoolService {
 
 
     public SchoolDTO addTeacherToSchool(Integer schoolId, Integer teacherId) {
-        School school = schoolRepository.findById(schoolId).orElseThrow(()-> new EntityNotFoundException("School not found"));
+        School school = schoolRepository.findById(schoolId)
+                .orElseThrow(()-> new BadRequestException("Invalid school: " + schoolId + "\n Please use real school ID."));
 
-        Teacher teacher = teacherRepository.findById(teacherId).orElseThrow(()-> new EntityNotFoundException("Teacher not found"));
+        Teacher teacher = teacherRepository.findById(teacherId)
+                .orElseThrow(()-> new BadRequestException("Invalid teacher: " + teacherId + "\n Please use real teacher ID."));
+
         school.addTeacher(teacher);
         School saved = schoolRepository.save(school);
         return schoolMapper.toDto(saved);
     }
 
-    public SchoolDTO create(SchoolDTO school) {
-        var schoolDto = schoolMapper.toEntity(school);
-        School saved = schoolRepository.save(schoolDto);
-        return schoolMapper.toDto(saved);
+    public SchoolDTO create(SchoolDTO schoolDTO) {
+        if (schoolDTO == null) throw new BadRequestException("Request body is required");
+        if (schoolDTO.schoolName() == null || schoolDTO.degree() == null) {
+            throw new BadRequestException("schoolName and degree are required");
+        }
+        var school = schoolMapper.toEntity(schoolDTO);
+        return schoolMapper.toDto(schoolRepository.save(school));
     }
 
 
@@ -64,6 +74,11 @@ public class SchoolService {
     }
 
     public void deleteById(Integer schoolId) {
-        schoolRepository.deleteById(schoolId);
+        if (schoolRepository.findById(schoolId).isPresent()) {
+            schoolRepository.deleteById(schoolId);
+        } else {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("School not found: %s", schoolId));
+        }
+
     }
 }

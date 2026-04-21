@@ -7,9 +7,10 @@ import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring")
 public interface SubjectMapper {
-
+    @Mapping(target = "teacher", ignore = true)
     SubjectDTO toDto(Subject subject);
 
     @Mapping(target = "students", ignore = true)
+    @Mapping(target = "teacher", ignore = true)
     Subject toEntity(SubjectDTO subjectDTO);
 }

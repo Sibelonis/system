@@ -1,10 +1,16 @@
 package com.school.system.modelsDTO;
 
-public record TeacherDTO(
+import jakarta.validation.constraints.NotNull;
 
+import java.util.List;
+
+public record TeacherDTO(
+        @NotNull
         String firstName,
+        @NotNull
         String lastName,
-        String homeRoom
+        String homeRoom,
+        List<StudentDTO> students
 
 ) {
 }

@@ -17,8 +17,13 @@ public class SchoolController {
     }
 
     @PostMapping("/school-save")
+    @ResponseStatus(HttpStatus.CREATED)
     public SchoolDTO saveSchool(@RequestBody SchoolDTO schoolDTO) {
-        return schoolService.create(schoolDTO);
+        if (schoolDTO != null) {
+
+            return schoolService.create(schoolDTO);
+        }
+        return null;
     }
 
     @GetMapping("/schools")
@@ -26,10 +31,11 @@ public class SchoolController {
         return schoolService.findAll();
     }
 
-    @DeleteMapping("/schools/{school-id}")
+    @DeleteMapping("/schools/delete-school-{school-id}")
     @ResponseStatus(HttpStatus.OK)
     public void deleteSchool(@PathVariable("school-id") Integer schoolId) {
         schoolService.deleteById(schoolId);
+
     }
 
     @PostMapping("/school-{school-id}/student-{student-id}")

@@ -1,5 +1,6 @@
 package com.school.system.services;
 
+import com.school.system.errorHandling.BadRequestException;
 import com.school.system.maps.TeacherMapper;
 import com.school.system.models.Student;
 import com.school.system.models.Subject;
@@ -9,7 +10,9 @@ import com.school.system.repositories.StudentRepository;
 import com.school.system.repositories.SubjectRepository;
 import com.school.system.repositories.TeacherRepository;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -30,9 +33,15 @@ public class TeacherService {
         this.teacherMapper = teacherMapper;
     }
 
-    public Teacher create(Teacher teacher) {
-        teacherRepository.save(teacher);
-        return teacher;
+    public TeacherDTO create(TeacherDTO teacherDTO) {
+        if (teacherDTO == null) throw new BadRequestException("Request body is required");
+        if (teacherDTO.firstName() == null || teacherDTO.lastName() == null) {
+            throw new BadRequestException("Teacher first name and last name are required");
+        }
+            var teacher = teacherMapper.toEntity(teacherDTO);
+            Teacher saved = teacherRepository.save(teacher);
+            return teacherMapper.toDto(saved);
+
     }
 
     public List<TeacherDTO> findAll() {
@@ -42,21 +51,26 @@ public class TeacherService {
                 .collect(Collectors.toList());
     }
     public void deleteById(Integer teacherID) {
-        teacherRepository.deleteById(teacherID);
+        if (teacherRepository.findById(teacherID).isPresent()) {
+            teacherRepository.deleteById(teacherID);
+        }else {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
     }
 
     public TeacherDTO addStudentToTeacher(Integer teacherId, Integer studentId) {
         Teacher teacher = teacherRepository.findById(teacherId).orElseThrow(()-> new EntityNotFoundException("Teacher not found"));
-
         Student student = studentRepository.findById(studentId).orElseThrow(()-> new EntityNotFoundException("Student not found"));
+
         teacher.addStudent(student);
-        Teacher saved =  teacherRepository.save(teacher);
+        Teacher saved = teacherRepository.save(teacher);
         return teacherMapper.toDto(saved);
     }
 
     public TeacherDTO addSubjectToTeacher(Integer teacherId, String subjectName) {
         Teacher teacher = teacherRepository.findById(teacherId).orElseThrow(()-> new EntityNotFoundException("Teacher not found"));
         Subject subject = subjectRepository.findByName(subjectName).orElseThrow(()-> new EntityNotFoundException("Subject not found"));
+
         teacher.addSubject(subject);
         Teacher saved = teacherRepository.save(teacher);
         return teacherMapper.toDto(saved);

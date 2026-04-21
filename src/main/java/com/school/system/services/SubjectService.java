@@ -21,9 +21,13 @@ public class SubjectService {
         this.subjectMapper = subjectMapper;
     }
 
-    public Subject create(Subject subject) {
-        subjectRepository.save(subject);
-        return subject;
+    public SubjectDTO create(SubjectDTO subjectDTO) {
+        if (subjectDTO.name() != null ){
+            var subject = subjectMapper.toEntity(subjectDTO);
+            Subject saved = subjectRepository.save(subject);
+            return subjectMapper.toDto(saved);
+        }
+        return null;
     }
     public List<SubjectDTO> findAll() {
         return subjectRepository.findAll()

@@ -17,8 +17,8 @@ public class SubjectController {
     }
 
     @PostMapping("/subject")
-    public Subject saveSubject(@RequestBody Subject subject) {
-        return subjectService.create(subject);
+    public SubjectDTO saveSubject(@RequestBody SubjectDTO subjectDTO) {
+        return subjectService.create(subjectDTO);
     }
 
     @GetMapping("/subjects")
@@ -26,7 +26,7 @@ public class SubjectController {
         return subjectService.findAll();
     }
 
-    @DeleteMapping("/subjects/{subject-id}")
+    @DeleteMapping("/subjects/delete-{subject-id}")
     @ResponseStatus(HttpStatus.OK)
     public void deleteSubject(@PathVariable("subject-id") Integer subjectID) {
         subjectService.deleteById(subjectID);

@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import com.school.system.Difficulty;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -21,9 +23,12 @@ public class Subject {
     @Id
     @GeneratedValue
     private Integer id;
+    @NotEmpty
+    @NotNull
     private String name;
     @Embedded
     private Difficulty difficulty;
+
     private String description;
     @ManyToMany
     @JoinTable(
@@ -42,7 +47,9 @@ public class Subject {
     @JsonManagedReference("teachers-subject")
     private Teacher teacher;
 
-    public void setStudentsList(List<Student> students) { this.students = students; }
+    public void setStudentsList(List<Student> students) {
+        this.students = students;
+    }
 
     public void addStudent(Student student) {
         if (students == null) students = new ArrayList<>();

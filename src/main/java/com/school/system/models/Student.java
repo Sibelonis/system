@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -22,9 +24,12 @@ public class Student {
     @Id
     @GeneratedValue
     private Integer id;
+    @NotEmpty
     private String firstName;
+    @NotEmpty
     private String lastName;
     private String homeRoom;
+    @NotNull
     private int age;
 
     @ManyToOne
@@ -40,6 +45,14 @@ public class Student {
     @ManyToMany(mappedBy = "students")
     @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
     private List<Subject> subjects;
+
+    public Student(String firstName, String lastName, String homeRoom, int age) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.homeRoom = homeRoom;
+        this.age = age;
+    }
+
 
     public void addSubject(Subject subject) {
         if (subjects == null) subjects = new ArrayList<>();

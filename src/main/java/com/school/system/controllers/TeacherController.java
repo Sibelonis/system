@@ -18,7 +18,7 @@ public class TeacherController {
     }
 
     @PostMapping("/teacher")
-    public Teacher saveTeacher(@RequestBody Teacher teacher){
+    public TeacherDTO saveTeacher(@RequestBody TeacherDTO teacher){
         return teacherService.create(teacher);
     }
 
@@ -27,7 +27,7 @@ public class TeacherController {
         return teacherService.findAll();
     }
 
-    @DeleteMapping("/teachers/{teacher-id}")
+    @DeleteMapping("/teachers/delete-{teacher-id}")
     @ResponseStatus(HttpStatus.OK)
     public void deleteTeacher(@PathVariable("teacher-id") Integer teacherId) {
             teacherService.deleteById(teacherId);

@@ -3,6 +3,8 @@ package com.school.system.models;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -21,15 +23,20 @@ public class School {
     @Id
     @GeneratedValue
     private Integer schoolId;
+    @NotEmpty
+    @NotNull
     private String schoolName;
     @Embedded
     private Address schoolAddress;
+    @NotEmpty
+    @NotNull
     private String degree;
     private int studentCount;
-    @OneToMany(mappedBy = "school")
+    @OneToMany(mappedBy = "school"
+    ,fetch = FetchType.EAGER)
     @JsonManagedReference("school-students")
     private List<Student> students;
-    @OneToMany(mappedBy = "school")
+    @OneToMany(mappedBy = "school",fetch = FetchType.EAGER)
     @JsonManagedReference("school-teachers")
     private List<Teacher> teachers;
 
@@ -58,5 +65,6 @@ public class School {
         teachers.add(teacher);
         teacher.setSchool(this);
     }
+
 
 }
