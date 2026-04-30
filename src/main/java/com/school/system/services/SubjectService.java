@@ -4,8 +4,12 @@ package com.school.system.services;
 import com.school.system.maps.SubjectMapper;
 import com.school.system.models.Subject;
 import com.school.system.modelsDTO.SubjectDTO;
+import com.school.system.repositories.StudentRepository;
 import com.school.system.repositories.SubjectRepository;
+import com.school.system.repositories.TeacherRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -14,10 +18,14 @@ import java.util.stream.Collectors;
 public class SubjectService {
 
     private final SubjectRepository subjectRepository;
+    private final TeacherRepository teacherRepository;
+    private final StudentRepository studentRepository;
     private final SubjectMapper subjectMapper;
 
-    public SubjectService(SubjectRepository subjectRepository, SubjectMapper subjectMapper) {
+    public SubjectService(SubjectRepository subjectRepository, SubjectMapper subjectMapper, TeacherRepository teacherRepository, StudentRepository studentRepository) {
         this.subjectRepository = subjectRepository;
+        this.teacherRepository = teacherRepository;
+        this.studentRepository = studentRepository;
         this.subjectMapper = subjectMapper;
     }
 
@@ -37,7 +45,28 @@ public class SubjectService {
     }
 
     public void deleteById(Integer subjectID) {
+        var subject = subjectRepository.findById(subjectID)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST, "Subject not found: " + subjectID));
+
+        var students = subject.getStudents();
+        if (students != null && !students.isEmpty()) {
+            students.forEach(s -> {
+                if (s.getSubjects() != null) {
+                    s.getSubjects().remove(subject);
+                }
+            });
+            studentRepository.saveAll(students);
+        }
+
+        if (subject.getTeacher() != null) {
+            var teacher = subject.getTeacher();
+            teacher.setSubject(null);
+            teacherRepository.save(teacher);
+        }
+
         subjectRepository.deleteById(subjectID);
     }
+
 }
 

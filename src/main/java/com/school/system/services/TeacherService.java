@@ -51,16 +51,29 @@ public class TeacherService {
                 .collect(Collectors.toList());
     }
     public void deleteById(Integer teacherID) {
-        if (teacherRepository.findById(teacherID).isPresent()) {
-            teacherRepository.deleteById(teacherID);
-        }else {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        var teacher = teacherRepository.findById(teacherID)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Teacher not found: " + teacherID));
+
+        if (teacher.getSubject() != null) {
+            var subject = teacher.getSubject();
+            subject.setTeacher(null);
+            subjectRepository.save(subject);
+            teacher.setSubject(null);
         }
+
+        var students = teacher.getStudents();
+        if (students != null && !students.isEmpty()) {
+            students.forEach(s -> s.setTeacher(null));
+            studentRepository.saveAll(students);
+            teacher.getStudents().clear();
+        }
+
+        teacherRepository.deleteById(teacherID);
     }
 
     public TeacherDTO addStudentToTeacher(Integer teacherId, Integer studentId) {
-        Teacher teacher = teacherRepository.findById(teacherId).orElseThrow(()-> new EntityNotFoundException("Teacher not found"));
-        Student student = studentRepository.findById(studentId).orElseThrow(()-> new EntityNotFoundException("Student not found"));
+        Teacher teacher = teacherRepository.findById(teacherId).orElseThrow(()-> new BadRequestException("Teacher not found. Make sure teacher exists"));
+        Student student = studentRepository.findById(studentId).orElseThrow(()-> new BadRequestException("Student not found. Make sure student exists."));
 
         teacher.addStudent(student);
         Teacher saved = teacherRepository.save(teacher);
@@ -68,8 +81,10 @@ public class TeacherService {
     }
 
     public TeacherDTO addSubjectToTeacher(Integer teacherId, String subjectName) {
-        Teacher teacher = teacherRepository.findById(teacherId).orElseThrow(()-> new EntityNotFoundException("Teacher not found"));
-        Subject subject = subjectRepository.findByName(subjectName).orElseThrow(()-> new EntityNotFoundException("Subject not found"));
+        Teacher teacher = teacherRepository.findById(teacherId)
+                .orElseThrow(()-> new BadRequestException("Teacher not found. Make sure teacher exists."));
+        Subject subject = subjectRepository.findByName(subjectName)
+                .orElseThrow(()-> new BadRequestException("Subject not found. Make sure you are using existing subject name."));
 
         teacher.addSubject(subject);
         Teacher saved = teacherRepository.save(teacher);

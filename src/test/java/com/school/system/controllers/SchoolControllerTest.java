@@ -9,17 +9,22 @@ import com.school.system.modelsDTO.StudentDTO;
 import com.school.system.modelsDTO.TeacherDTO;
 import com.school.system.repositories.SchoolRepository;
 import com.school.system.repositories.StudentRepository;
+import com.school.system.repositories.SubjectRepository;
 import com.school.system.repositories.TeacherRepository;
+import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.mockito.MockitoAnnotations;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.annotation.Rollback;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,13 +47,28 @@ class SchoolControllerTest {
     @Autowired
     private TeacherRepository teacherRepository;
 
+    @Autowired
+    private SubjectRepository subjectRepository;
 
-    @BeforeAll
+
+    @BeforeEach
     void setUpOnce() {
-        MockitoAnnotations.openMocks(this);
-        schoolRepository.deleteAll();
+        studentRepository.findAll().forEach(s -> {
+            s.setSubjects(null);
+            studentRepository.save(s);
+        });
+        teacherRepository.findAll().forEach(t -> {
+            if (t.getSubject() != null) {
+                t.setSubject(null);
+                teacherRepository.save(t);
+            }
+        });
+
+        subjectRepository.deleteAll();
         studentRepository.deleteAll();
+        schoolRepository.deleteAll();
         teacherRepository.deleteAll();
+
         Address address = new Address();
         School school = new School(
                 "MIT",
@@ -65,7 +85,6 @@ class SchoolControllerTest {
                 address,
                 "Kindergarten"
         );
-
 
         Student student = new Student(
                 "Pavol",
@@ -85,7 +104,6 @@ class SchoolControllerTest {
                 "Ninja class",
                 45
         );
-
 
         Teacher teacher = new Teacher(
                 "Jan",
@@ -108,9 +126,10 @@ class SchoolControllerTest {
                 "Ninja class",
                 10
         );
-        schoolRepository.saveAll(List.of(school, school2, school3));
-        studentRepository.saveAll(List.of(student, student2, student3));
         teacherRepository.saveAll(List.of(teacher, teacher2, teacher3));
+        studentRepository.saveAll(List.of(student, student2, student3));
+        schoolRepository.saveAll(List.of(school, school2, school3));
+        studentRepository.save(student);
     }
     @Test
     void shouldCreateSchool_shouldReturnOk_schoolIsInDatabase() {
@@ -124,7 +143,7 @@ class SchoolControllerTest {
                 teachers
         );
         //Act
-        ResponseEntity<SchoolDTO> response = restTemplate.postForEntity("/school-save", school, SchoolDTO.class);
+        ResponseEntity<SchoolDTO> response = restTemplate.postForEntity("/school/save", school, SchoolDTO.class);
         //Assert
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 
@@ -135,9 +154,11 @@ class SchoolControllerTest {
         SchoolDTO school = null;
 
         //Act
-        ResponseEntity<Void> response = restTemplate.postForEntity("/school-save", school, Void.class);
+        ResponseEntity<Void> response = restTemplate.postForEntity("/school/save", school, Void.class);
         //Assert
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+
+        schoolRepository.deleteAll();
 
     }
 
@@ -148,102 +169,71 @@ class SchoolControllerTest {
     }
 
     @Test
-    void shouldDeleteSchool_shouldReturnOk_schoolRemovedFromDatabase() {
-        ResponseEntity<Void> result = this.restTemplate.exchange("/schools/delete-school-3", HttpMethod.DELETE,null, Void.class);
+    void deleteSchool_success() {
+        String url = "/schools/delete/school/{id}";
+
+        String resolved = url.replace("{id}", String.valueOf(schoolRepository.findAll().getFirst().getSchoolId()));
+
+
+        ResponseEntity<Void> result = this.restTemplate.exchange(resolved, HttpMethod.DELETE, null, Void.class);
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
-
     }
 
-    @Test
-    void tryDeleteSchoolWithNoId_shouldReturnBadRequest_schoolIsInDatabase() {
-        ResponseEntity<Void> result = this.restTemplate.exchange("/schools/delete-school-", HttpMethod.DELETE, null, Void.class);
-        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-    }
-    @Test
-    void tryDeleteSchoolWithLettersInId_shouldReturnBadRequest_schoolIsInDatabase() {
-        ResponseEntity<Void> result = this.restTemplate.exchange("/schools/delete-school-se", HttpMethod.DELETE, null, Void.class);
-        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    void tryDeleteSchoolWithIncorrectId_shouldReturnNotFound_schoolIsInDatabase() {
-        ResponseEntity<Void> result = this.restTemplate.exchange("/schools/delete-school-123", HttpMethod.DELETE, null, Void.class);
-        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    @ParameterizedTest
+    @CsvSource({
+            "/schools/delete/school/, NOT_FOUND",
+            "/schools/delete/school/se, BAD_REQUEST",
+            "/schools/delete/school/123, BAD_REQUEST"
+    })
+    void deleteSchool_failure(String url, HttpStatus expected) {
+        ResponseEntity<Void> result = this.restTemplate.exchange(url, HttpMethod.DELETE, null, Void.class);
+        assertThat(result.getStatusCode()).isEqualTo(expected);
     }
 
     @Test
-    void shouldSetStudentToSchool_shouldReturnedCreated_andSchoolHasOneStudent() {
-        String url = "/school-1/student-1";
-        ResponseEntity<SchoolDTO> response = this.restTemplate.postForEntity(url, null, SchoolDTO.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+    void setStudentToSchool_success() {
+        String url = "/school/{school-id}/student/{student-id}";
+
+        String resolved = url.replace("{school-id}", String.valueOf(schoolRepository.findAll().getFirst().getSchoolId()))
+                .replace("{student-id}", String.valueOf(studentRepository.findAll().getFirst().getId()));
+
+        ResponseEntity<SchoolDTO> result = this.restTemplate.postForEntity(resolved,  null, SchoolDTO.class);
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.CREATED);
     }
-    @Test
-    void trySetStudentWitWrongIdToRealSchool_shouldReturnBadRequest_schoolHasNoStudents() {
-        String url = "/school-1/student-87";
-        ResponseEntity<SchoolDTO> response = this.restTemplate.postForEntity(url, null, SchoolDTO.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    @ParameterizedTest
+    @CsvSource({
+            "/school//student/, NOT_FOUND",
+            "/school/1/student/87, BAD_REQUEST",
+            "/school/5678/student/1, BAD_REQUEST",
+            "/school/asd/student/asd, BAD_REQUEST"
+    })
+    void setStudentToSchool_parameterized_failure(String path, HttpStatus expected) {
+        ResponseEntity<SchoolDTO> response = this.restTemplate.postForEntity(path, null, SchoolDTO.class);
+        assertThat(response.getStatusCode()).isEqualTo(expected);
     }
 
-    @Test
-    void trySetStudentWithRightIdToFakeSchool_shouldReturnBadRequest_schoolHasNoStudents() {
-        String url = "/school-5678/student-1";
-        ResponseEntity<SchoolDTO> response = this.restTemplate.postForEntity(url, null, SchoolDTO.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-    }
 
     @Test
-    void trySetStudentWithBlankIdBlankSchool_shouldReturnBadRequest_schoolHasNoStudents() {
-        String url = "/school-/student-";
-        ResponseEntity<SchoolDTO> response = this.restTemplate.postForEntity(url, null, SchoolDTO.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    void setTeacherToSchool_success() {
+        String url = "/school/{school-id}/teacher/{teacher-id}";
+
+        String resolved = url.replace("{school-id}", String.valueOf(schoolRepository.findAll().getFirst().getSchoolId()))
+                .replace("{teacher-id}", String.valueOf(teacherRepository.findAll().getFirst().getId()));
+
+        ResponseEntity<SchoolDTO> result = this.restTemplate.postForEntity(resolved, null, SchoolDTO.class);
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.CREATED);
     }
-    @Test
-    void trySetStudentToSchoolButIdsAreLetters_shouldReturnBadRequest_schoolHasNoStudents() {
-        String url = "/school-asd/student-asd";
-        ResponseEntity<SchoolDTO> response = this.restTemplate.postForEntity(url, null, SchoolDTO.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-    }
-    @Test
-    void shouldSetTeacherToSchool_shouldReturnedCreated_andSchoolHasOneTeacher() {
-        String url = "/school-1/teacher-2";
-        ResponseEntity<SchoolDTO> response = this.restTemplate.postForEntity(url, null, SchoolDTO.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-    }
-    @Test
-    void trySetTeacherWithWrongIdToSchool_shouldReturnedBadRequest_andSchoolHasNoTeacher() {
-        String url = "/school-1/teacher-2123";
-        ResponseEntity<SchoolDTO> response = this.restTemplate.postForEntity(url, null, SchoolDTO.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-    }
-    @Test
-    void trySetTeacherWithNoIdToSchool_shouldReturnedBadRequest_andSchoolHasNoTeacher() {
-        String url = "/school-1/teacher-";
-        ResponseEntity<SchoolDTO> response = this.restTemplate.postForEntity(url, null, SchoolDTO.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-    }
-    @Test
-    void trySetTeacherToSchoolWithWrongId_shouldReturnedBadRequest_andSchoolHasNoTeacher() {
-        String url = "/school-1231/teacher-1";
-        ResponseEntity<SchoolDTO> response = this.restTemplate.postForEntity(url, null, SchoolDTO.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-    }
-    @Test
-    void trySetTeacherToSchoolWithNoId_shouldReturnedBadRequest_andSchoolHasNoTeacher() {
-        String url = "/school-/teacher-1";
-        ResponseEntity<SchoolDTO> response = this.restTemplate.postForEntity(url, null, SchoolDTO.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-    }
-    @Test
-    void trySetTeacherToSchoolButBothHaseWrongId_shouldReturnedBadRequest_andSchoolHasNoTeacher() {
-        String url = "/school-1231/teacher-1456";
-        ResponseEntity<SchoolDTO> response = this.restTemplate.postForEntity(url, null, SchoolDTO.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-    }
-    @Test
-    void trySetTeacherToSchoolButIdIsLetters_shouldReturnedBadRequest_andSchoolHasNoTeacher() {
-        String url = "/school-asd/teacher-asd";
-        ResponseEntity<SchoolDTO> response = this.restTemplate.postForEntity(url, null, SchoolDTO.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+
+    @ParameterizedTest
+    @CsvSource({
+            "/school/1/teacher/99, BAD_REQUEST",
+            "/school/58/teacher/1, BAD_REQUEST",
+            "/school//teacher/, NOT_FOUND",
+            "/school/asd/teacher/ad, BAD_REQUEST"
+    })
+    void setTeacherToSchool_parameterized(String path, HttpStatus expected) {
+        ResponseEntity<SchoolDTO> response = this.restTemplate.postForEntity(path, null, SchoolDTO.class);
+        assertThat(response.getStatusCode()).isEqualTo(expected);
     }
 
 }

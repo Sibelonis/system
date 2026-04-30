@@ -1,6 +1,7 @@
 package com.school.system.services;
 
 import com.school.system.Difficulty;
+import com.school.system.errorHandling.BadRequestException;
 import com.school.system.maps.StudentMapper;
 import com.school.system.maps.SubjectMapper;
 import com.school.system.models.Student;
@@ -9,7 +10,6 @@ import com.school.system.modelsDTO.StudentDTO;
 import com.school.system.modelsDTO.SubjectDTO;
 import com.school.system.repositories.StudentRepository;
 import com.school.system.repositories.SubjectRepository;
-import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -52,10 +52,10 @@ class StudentServiceTest {
     @Test
     void createStudent_returnsDto_whenProvidedDtoProperties() {
 
-        StudentDTO studentDTO = new StudentDTO("Michale","Human","",null,null);
+        StudentDTO studentDTO = new StudentDTO("Michale","Human","",null);
         Student student = new Student();
         Student savedStudent = new Student();
-        StudentDTO expectedStudentDTO = new StudentDTO("Michale","Human","",null,null);
+        StudentDTO expectedStudentDTO = new StudentDTO("Michale","Human","",null);
 
         when(studentMapper.toEntity(studentDTO)).thenReturn(student);
         when(studentRepository.save(student)).thenReturn(savedStudent);
@@ -69,17 +69,14 @@ class StudentServiceTest {
         verify(studentMapper).toEntity(studentDTO);
         verify(studentMapper).toDTO(savedStudent);
         verify(studentRepository).save(student);
-        verify(studentRepository).save(savedStudent);
 
     }
     @Test
     void createStudent_returnsNull_whenNullStudentDTO() {
 
-        StudentDTO studentDTO = new StudentDTO(null,null,null,null,null);
+        StudentDTO studentDTO = new StudentDTO(null,null,null,null);
 
-        StudentDTO result = studentService.create(studentDTO);
-
-        assertNull(result);
+        assertThrows(BadRequestException.class, () -> studentService.create(studentDTO));
         verifyNoInteractions(studentMapper);
         verifyNoInteractions(studentRepository);
     }
@@ -91,8 +88,8 @@ class StudentServiceTest {
         student1.setFirstName("Michale");
         student2.setFirstName("Human");
         List<Student> entities = List.of(student1,student2);
-        StudentDTO studentDTO1 = new StudentDTO("Michaleeee","NotHuman","2",null,null);
-        StudentDTO studentDTO2 = new StudentDTO("Michale","Human","4",null,null);
+        StudentDTO studentDTO1 = new StudentDTO("Michaleeee","NotHuman","2",null);
+        StudentDTO studentDTO2 = new StudentDTO("Michale","Human","4",null);
 
         when(studentRepository.findAll()).thenReturn(entities);
         when(studentMapper.toDTO(student1)).thenReturn(studentDTO1);
@@ -150,7 +147,7 @@ class StudentServiceTest {
 
         student.addSubject(subject);
 
-        StudentDTO studentDTO1 = new StudentDTO("Michale","Human","2",null,subjects);
+        StudentDTO studentDTO1 = new StudentDTO("Michale","Human","2",subjects);
 
         when(studentRepository.findById(student.getId())).thenReturn(Optional.of(student));
         when(subjectRepository.findByName(subject.getName())).thenReturn(Optional.of(subject));
@@ -171,9 +168,10 @@ class StudentServiceTest {
 
         when(studentRepository.findById(studentId)).thenReturn(Optional.empty());
         when(subjectRepository.findByName(name)).thenReturn(Optional.empty());
-        EntityNotFoundException ex = assertThrows(EntityNotFoundException.class, () -> studentService.addSubjectToStudent(studentId, name));
+        BadRequestException ex = assertThrows(BadRequestException.class,
+                () -> studentService.addSubjectToStudent(studentId, name));
 
-        assertEquals("Student not found", ex.getMessage());
+        assertEquals("Invalid student: " + studentId + "\n Please use real student ID.", ex.getMessage());
 
         verify(studentRepository).findById(studentId);
         verifyNoInteractions(subjectRepository,studentMapper,subjectMapper);

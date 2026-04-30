@@ -1,6 +1,5 @@
 package com.school.system.services;
 
-import com.school.system.Difficulty;
 import com.school.system.maps.SubjectMapper;
 import com.school.system.maps.TeacherMapper;
 import com.school.system.models.Subject;
@@ -8,17 +7,17 @@ import com.school.system.models.Teacher;
 import com.school.system.modelsDTO.SubjectDTO;
 import com.school.system.modelsDTO.TeacherDTO;
 import com.school.system.repositories.SubjectRepository;
-import com.school.system.repositories.TeacherRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -44,10 +43,10 @@ class SubjectServiceTest {
     void create_shouldSaveAndReturnSubject() {
         TeacherDTO teacher = new TeacherDTO("","","",null);
 
-        SubjectDTO subjectDTO = new SubjectDTO("Math",teacher);
+        SubjectDTO subjectDTO = new SubjectDTO("Math","");
         Subject subject = new Subject();
         Subject savedSubject = new Subject();
-        SubjectDTO expectedSubjectDTO = new SubjectDTO("Math",teacher);
+        SubjectDTO expectedSubjectDTO = new SubjectDTO("Math","");
 
         when(subjectMapper.toEntity(subjectDTO)).thenReturn(subject);
         when(subjectRepository.save(subject)).thenReturn(savedSubject);
@@ -61,7 +60,6 @@ class SubjectServiceTest {
         verify(subjectMapper).toEntity(subjectDTO);
         verify(subjectMapper).toDto(savedSubject);
         verify(subjectRepository).save(subject);
-        verify(subjectRepository).save(savedSubject);
 
 
     }
@@ -87,9 +85,9 @@ class SubjectServiceTest {
         Teacher teacher = new Teacher();
         Teacher teacher2 = new Teacher();
 
-        SubjectDTO subjectDto1 = new SubjectDTO("A",teacherMapper.toDto(teacher));
+        SubjectDTO subjectDto1 = new SubjectDTO("A","desc");
 
-        SubjectDTO subjectDto2 = new SubjectDTO("B",teacherMapper.toDto(teacher2));
+        SubjectDTO subjectDto2 = new SubjectDTO("B","descss");
 
         when(subjectRepository.findAll()).thenReturn(Arrays.asList(s1, s2));
         when(subjectMapper.toDto(s1)).thenReturn(subjectDto1);
@@ -106,23 +104,25 @@ class SubjectServiceTest {
     }
 
     @Test
-    void deleteById_shouldCallRepository_WhenExists() {
-        doNothing().when(subjectRepository).deleteById(1);
+    void deleteById_shouldDeleteSubject() {
+        int id = 1;
+        Subject subject = new Subject();
 
-        assertDoesNotThrow(() -> subjectService.deleteById(1));
-        verify(subjectRepository, times(1)).deleteById(1);
+        when(subjectRepository.findById(anyInt())).thenReturn(Optional.of(subject));
+
+        subjectService.deleteById(1);
+
+        verify(subjectRepository).findById(id);
+        verify(subjectRepository).deleteById(id);
     }
 
     @Test
-    void deleteById_shouldPropagateWhenNotFound() {
+    void deleteById_notFound_throws() {
+        when(subjectRepository.findById(999)).thenReturn(Optional.empty());
 
-        doThrow(new EmptyResultDataAccessException(1)).when(subjectRepository).deleteById(99);
-
-        EmptyResultDataAccessException ex = assertThrows(EmptyResultDataAccessException.class, () -> {
-            subjectService.deleteById(99);
-        });
-
-        assertNotNull(ex);
-        verify(subjectRepository, times(1)).deleteById(99);
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> subjectService.deleteById(999));
+        assertTrue(ex.getMessage().contains("Subject not found"));
+        verify(subjectRepository, never()).deleteById(anyInt());
     }
+
 }

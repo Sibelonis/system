@@ -16,10 +16,9 @@ public class StudentController {
         this.studentService = studentService;
     }
 
-    @PostMapping("/student-save")
-    public HttpStatus saveStudent(@RequestBody StudentDTO student) {
-        studentService.create(student);
-        return HttpStatus.OK;
+    @PostMapping("/student/save")
+    public StudentDTO saveStudent(@RequestBody StudentDTO student) {
+        return studentService.create(student);
     }
 
     @GetMapping("/students")
@@ -27,13 +26,13 @@ public class StudentController {
                return studentService.findAll();
     }
 
-    @DeleteMapping("/students/delete-{student-id}")
+    @DeleteMapping("/students/delete/{student-id}")
     @ResponseStatus(HttpStatus.OK)
     public void deleteStudent(@PathVariable("student-id") Integer studentId) {
         studentService.deleteById(studentId);
 
     }
-    @PostMapping("/student-{student-id}/subject-{subject-name}")
+    @PostMapping("/student/{student-id}/subject/{subject-name}")
     public ResponseEntity<StudentDTO> addSubjectToStudent(@PathVariable("student-id") Integer studentId, @PathVariable("subject-name") String subjectName) {
         StudentDTO create = studentService.addSubjectToStudent(studentId,subjectName);
         return ResponseEntity.status(HttpStatus.CREATED).body(create);

@@ -74,11 +74,18 @@ public class SchoolService {
     }
 
     public void deleteById(Integer schoolId) {
-        if (schoolRepository.findById(schoolId).isPresent()) {
-            schoolRepository.deleteById(schoolId);
-        } else {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("School not found: %s", schoolId));
+        var school = schoolRepository.findById(schoolId)
+                .orElseThrow(() -> new BadRequestException( "School not found: " + schoolId));
+        var students = school.getStudents();
+        if (students != null && !students.isEmpty()) {
+            students.forEach(s -> s.setSchool(null));
+            studentRepository.saveAll(students);
         }
-
+        var teachers = school.getTeachers();
+        if (teachers != null && !teachers.isEmpty()) {
+            teachers.forEach(t -> t.setSchool(null));
+            teacherRepository.saveAll(teachers);
+        }
+        schoolRepository.deleteById(schoolId);
     }
 }

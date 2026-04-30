@@ -33,18 +33,18 @@ public class Teacher {
     private int age;
     private String homeRoom;
 
-    @OneToMany(mappedBy = "teacher")
+    @OneToMany(mappedBy = "teacher",cascade = CascadeType.PERSIST)
     @JsonManagedReference("students-teachers")
     private List<Student> students;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "school_id")
     @JsonBackReference("school-teachers")
     private School school;
 
-    @OneToOne
+    @OneToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "subject_id")
-    @JsonBackReference("teachers-subject")
+    @JsonBackReference("teacher-subject")
     private Subject subject;
 
     public Teacher(String firstName, String lastName, String title, String homeRoom, int age) {
@@ -56,7 +56,9 @@ public class Teacher {
     }
 
     public void addStudent(Student student) {
-        if (students == null) students = new ArrayList<>();
+        if (students == null){
+            students = new ArrayList<>();
+        }
         students.add(student);
         student.setTeacher(this);
     }

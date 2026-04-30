@@ -10,7 +10,6 @@ public record StudentDTO(
         @NotNull
         String lastName,
         String homeRoom,
-        TeacherDTO teacher,
         List<SubjectDTO> subjects
 
 ) {

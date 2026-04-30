@@ -30,22 +30,23 @@ public class Subject {
     private Difficulty difficulty;
 
     private String description;
-    @ManyToMany
-    @JoinTable(
-            name = "student_subjects"
-            , joinColumns = {
-                    @JoinColumn(name = "subject_id")
-            },
-            inverseJoinColumns = {
-                    @JoinColumn(name = "student_id")
-            }
-    )
+
+    @ManyToMany(mappedBy = "subjects",cascade = CascadeType.PERSIST)
     @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
     private List<Student> students;
 
-    @OneToOne(mappedBy = "subject")
-    @JsonManagedReference("teachers-subject")
+    @OneToOne(mappedBy = "subject",cascade = CascadeType.PERSIST)
+    @JsonManagedReference("teacher-subject")
     private Teacher teacher;
+
+    public Subject(String name, Difficulty difficulty, String description, List<Student> student, Teacher teacher) {
+        this.name = name;
+        this.difficulty = difficulty;
+        this.description = description;
+        this.students = new ArrayList<>();
+        this.teacher = new Teacher();
+
+    }
 
     public void setStudentsList(List<Student> students) {
         this.students = students;
@@ -58,5 +59,18 @@ public class Subject {
             if (student.getSubjects() == null) student.setSubjects(new ArrayList<>());
             if (!student.getSubjects().contains(this)) student.getSubjects().add(this);
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Subject)) return false;
+        Subject subject = (Subject) o;
+        return id != null && id.equals(subject.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
     }
 }

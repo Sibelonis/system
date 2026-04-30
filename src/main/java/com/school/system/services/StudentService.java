@@ -7,6 +7,7 @@ import com.school.system.models.Subject;
 import com.school.system.modelsDTO.StudentDTO;
 import com.school.system.repositories.StudentRepository;
 import com.school.system.repositories.SubjectRepository;
+import com.school.system.repositories.TeacherRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -20,16 +21,20 @@ public class StudentService {
 
     private final StudentRepository studentRepository;
     private final SubjectRepository subjectRepository;
+    private final TeacherRepository teacherRepository;
     private final StudentMapper studentMapper;
 
-    public StudentService(StudentRepository studentRepository, SubjectRepository subjectRepository, StudentMapper studentMapper) {
+    public StudentService(StudentRepository studentRepository, SubjectRepository subjectRepository, StudentMapper studentMapper,TeacherRepository teacherRepository) {
         this.studentRepository = studentRepository;
         this.subjectRepository = subjectRepository;
+        this.teacherRepository = teacherRepository;
         this.studentMapper = studentMapper;
     }
 
     public StudentDTO create(StudentDTO studentDto) {
-        if (studentDto == null) throw new BadRequestException("Request body is required");
+        if (studentDto == null){
+            throw new BadRequestException("Request body is required");
+        }
         if (studentDto.firstName() == null || studentDto.lastName() == null) {
             throw new BadRequestException("Students first name and last name are required");
         }
@@ -47,11 +52,28 @@ public class StudentService {
     }
 
     public void deleteById(Integer studentID) {
-        if (studentRepository.findById(studentID).isPresent()) {
-            studentRepository.deleteById(studentID);
-        }else  {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        var student = studentRepository.findById(studentID)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Student not found: " + studentID));
+        if (student.getTeacher() != null) {
+            var teacher = student.getTeacher();
+            if (teacher.getStudents() != null) {
+                teacher.getStudents().removeIf(s -> s.getId().equals(student.getId()));
+                teacherRepository.save(teacher);
+            }
+            student.setTeacher(null);
         }
+        var subjects = student.getSubjects();
+        if (subjects != null && !subjects.isEmpty()) {
+            subjects.forEach(sub -> {
+                if (sub.getStudents() != null) {
+                    sub.getStudents().removeIf(s -> s.getId().equals(student.getId()));
+                }
+            });
+            subjectRepository.saveAll(subjects);
+            student.setSubjects(null);
+        }
+
+        studentRepository.deleteById(studentID);
     }
 
     public StudentDTO addSubjectToStudent(Integer studentId, String subjectName) {

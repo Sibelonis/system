@@ -32,17 +32,23 @@ public class Student {
     @NotNull
     private int age;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "teacher_id")
     @JsonBackReference("students-teachers")
     private Teacher teacher;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "school_id")
     @JsonBackReference("school-students")
     private School school;
 
-    @ManyToMany(mappedBy = "students")
+    @ManyToMany(cascade = CascadeType.PERSIST)
+    @JoinTable(
+            name = "student_subjects",
+            joinColumns = @JoinColumn(name = "student_id"),
+            inverseJoinColumns = @JoinColumn(name = "subject_id"
+            )
+    )
     @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
     private List<Subject> subjects;
 
@@ -62,5 +68,16 @@ public class Student {
             if (!subject.getStudents().contains(this)) subject.getStudents().add(this);
         }
     }
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Student)) return false;
+        Student s = (Student) o;
+        return id != null && id.equals(s.id);
+    }
 
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }

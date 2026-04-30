@@ -16,7 +16,7 @@ public class SchoolController {
         this.schoolService = schoolService;
     }
 
-    @PostMapping("/school-save")
+    @PostMapping("/school/save")
     @ResponseStatus(HttpStatus.CREATED)
     public SchoolDTO saveSchool(@RequestBody SchoolDTO schoolDTO) {
         if (schoolDTO != null) {
@@ -31,14 +31,14 @@ public class SchoolController {
         return schoolService.findAll();
     }
 
-    @DeleteMapping("/schools/delete-school-{school-id}")
+    @DeleteMapping("/schools/delete/school/{school-id}")
     @ResponseStatus(HttpStatus.OK)
     public void deleteSchool(@PathVariable("school-id") Integer schoolId) {
         schoolService.deleteById(schoolId);
 
     }
 
-    @PostMapping("/school-{school-id}/student-{student-id}")
+    @PostMapping("/school/{school-id}/student/{student-id}")
     public ResponseEntity<SchoolDTO> addStudentToSchool(
             @PathVariable("school-id") Integer schoolId,
             @PathVariable("student-id") Integer studentId) {
@@ -48,7 +48,7 @@ public class SchoolController {
 
     }
 
-    @PostMapping("/school-{school-id}/teacher-{teacher-id}")
+    @PostMapping("/school/{school-id}/teacher/{teacher-id}")
     public ResponseEntity<SchoolDTO> addTeacherToSchool(
             @PathVariable("school-id") Integer schoolId,
             @PathVariable("teacher-id") Integer teacherId) {

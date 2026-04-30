@@ -8,10 +8,8 @@ import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring")
 public interface StudentMapper {
-    @Mapping(target = "teacher", ignore = true)
     StudentDTO toDTO(Student student);
 
     @Mapping(target = "school", ignore = true)
-    @Mapping(target = "teacher", ignore = true)
     Student  toEntity(StudentDTO studentDTO);
 }

@@ -1,6 +1,7 @@
 package com.school.system.services;
 
 import com.school.system.Difficulty;
+import com.school.system.errorHandling.BadRequestException;
 import com.school.system.maps.StudentMapper;
 import com.school.system.maps.SubjectMapper;
 import com.school.system.maps.TeacherMapper;
@@ -8,13 +9,10 @@ import com.school.system.models.Student;
 import com.school.system.models.Subject;
 import com.school.system.models.Teacher;
 import com.school.system.modelsDTO.StudentDTO;
-import com.school.system.modelsDTO.SubjectDTO;
 import com.school.system.modelsDTO.TeacherDTO;
 import com.school.system.repositories.StudentRepository;
 import com.school.system.repositories.SubjectRepository;
 import com.school.system.repositories.TeacherRepository;
-import jakarta.persistence.EntityNotFoundException;
-import jakarta.validation.constraints.NotEmpty;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -30,7 +28,6 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.verifyNoInteractions;
 
 @AutoConfigureMockMvc
 class TeacherServiceTest {
@@ -75,7 +72,6 @@ class TeacherServiceTest {
         verify(teacherMapper).toEntity(teacherDTO);
         verify(teacherMapper).toDto(savedTeacher);
         verify(teacherRepository).save(teacher);
-        verify(teacherRepository).save(savedTeacher);
 
     }
 
@@ -84,9 +80,8 @@ class TeacherServiceTest {
 
         TeacherDTO teacherDTO = new TeacherDTO(null, null, null, null);
 
-        TeacherDTO result = teacherService.create(teacherDTO);
+        assertThrows(BadRequestException.class, () -> teacherService.create(teacherDTO));
 
-        assertNull(result);
         verifyNoInteractions(studentMapper);
         verifyNoInteractions(studentRepository);
     }
@@ -190,10 +185,10 @@ class TeacherServiceTest {
         when(teacherRepository.findById(teacherId)).thenReturn(Optional.of(teacher));
         when(studentRepository.findById(missingStudentId)).thenReturn(Optional.empty());
 
-        EntityNotFoundException ex = assertThrows(EntityNotFoundException.class,
+        BadRequestException ex = assertThrows(BadRequestException.class,
                 () -> teacherService.addStudentToTeacher(teacherId, missingStudentId));
 
-        assertEquals("Student not found", ex.getMessage());
+        assertEquals("Student not found. Make sure student exists.", ex.getMessage());
 
         verify(teacherRepository, never()).save(any());
         verify(studentRepository).findById(missingStudentId);
@@ -229,8 +224,7 @@ class TeacherServiceTest {
 
         verify(teacherRepository).save(any(Teacher.class));
         verify(subjectRepository).findByName(subject.getName());
-        verify(teacherRepository).findById(teacher.getSubject().getId());
-    }
+        verify(teacherRepository).findById(teacher.getId());    }
 
     @Test
     void addSubjectToTeacher_subjectNotFound_throws() {
@@ -245,10 +239,10 @@ class TeacherServiceTest {
         when(teacherRepository.findById(teacherId)).thenReturn(Optional.of(teacher));
         when(subjectRepository.findByName(missingSubjectName)).thenReturn(Optional.empty());
 
-        EntityNotFoundException ex = assertThrows(EntityNotFoundException.class,
+        BadRequestException ex = assertThrows(BadRequestException.class,
                 () -> teacherService.addSubjectToTeacher(teacherId, missingSubjectName));
 
-        assertEquals("Subject not found", ex.getMessage());
+        assertEquals("Subject not found. Make sure you are using existing subject name.", ex.getMessage());
 
         verify(teacherRepository, never()).save(any());
         verify(subjectRepository).findByName(missingSubjectName);

@@ -32,11 +32,10 @@ public class School {
     @NotNull
     private String degree;
     private int studentCount;
-    @OneToMany(mappedBy = "school"
-    ,fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "school",fetch = FetchType.EAGER,cascade = CascadeType.PERSIST)
     @JsonManagedReference("school-students")
     private List<Student> students;
-    @OneToMany(mappedBy = "school",fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "school",fetch = FetchType.EAGER,cascade = CascadeType.PERSIST)
     @JsonManagedReference("school-teachers")
     private List<Teacher> teachers;
 
@@ -65,6 +64,4 @@ public class School {
         teachers.add(teacher);
         teacher.setSchool(this);
     }
-
-
 }
